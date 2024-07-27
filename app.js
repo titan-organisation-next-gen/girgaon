@@ -1,46 +1,57 @@
-/* eslint-disable no-console */
-const express = require('express')
-const app = express()
-const http = require('http')
+const express = require("express");
+const app = express();
+const port = 3000;
+const fs = require('fs');
 const path = require('path')
-const ejs = require('ejs')
-const AppConfig = require('./config/app-config')
-const Routes = require('./routes')
+app.use(express.static(path.join(__dirname, 'public')));
+// Define a route for GET requests
+app.get("/api", (req, res) => {
+  res.json({ message: "Hello, world!" });
+});
 
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'ejs')
+app.get("/api/test", (req, res) => {
+  res.json({ message: "test api" });
+});
 
-class Server {
-  constructor() {
-    this.app = express()
-    this.app.use(express.json({ limit: '50mb' }))
-    this.app.use(express.urlencoded({ limit: '50mb', extended: true }))
-    this.http = http.Server(this.app)
-  }
+app.get("/api/public", (req, res) => {
+  res.json({ message: "public api" });
+});
 
-  appConfig() {
-    new AppConfig(this.app).includeConfig()
-  }
+app.get('/api/homepage', (req, res) => {
+  // Read the image file asynchronously
+  const imagePath = path.join(__dirname, 'public', 'image.jpg');
+  fs.readFile(imagePath, (err, imageData) => {
+    if (err) {
+      console.error('Error reading image file:', err);
+      res.status(500).send('Internal  Server Error');
+      return;
+    }
 
-  /* Including app Routes starts */
-  includeRoutes() {
-    new Routes(this.app).routesConfig()
-  }
-  /* Including app Routes ends */
+    // Construct the HTML content with the image
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Image File Example </title>
+      </head>
+      <body>
+        <h1>Image ExampleExampleExampleExampleExample</h1>
+        <img src="https://r.mobirisesite.com/584444/assets/images/photo-1467685790346-20bfe73a81f0.jpeg">
+      </body>
+      </html>
+    `;
 
-  startTheServer() {
-    this.appConfig()
-    this.includeRoutes()
+    // Send the HTML content as response
+    res.send(htmlContent);
+  });
+});
 
-    const port = process.env.NODE_SERVER_PORT || 3000
-    const host = process.env.NODE_SERVER_HOST || 'localhost'
 
-    this.http.listen(port, host, () => {
-      console.log(`Listening on http://${host}:${port}`)
-      //UNCOMMENT ONLY WHEN NEW CONTRACTS NEED TO BE DEPLOYED
-      // contractDeployScript.deployContracts();
-    })
-  }
-}
 
-module.exports = new Server()
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}/`);
+});
